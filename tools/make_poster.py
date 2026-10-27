@@ -226,7 +226,7 @@ def render_poster(path, w=1600, h=600):
     for label in ("8GB 显存可跑", "昇腾 8 卡扩容", "逐字符 A/B 验收", "图片不出网"):
         x = draw_chip(img, x, 378, label, font(20)) + 16
 
-    d.text((90, 472), "一次性的算力成本，替代按量的云 OCR 账单 · 模型 Apache-2.0 / 代码 MIT",
+    d.text((90, 472), "一次性的算力成本，替代按量的云 OCR 账单 · 模型遵循混元社区许可 / 代码 MIT",
            font=font(19), fill=(122, 138, 160), anchor="lm")
 
     draw_mock_card(img, (940, 85, 1520, 515), s=1.0)
@@ -266,7 +266,7 @@ def render_social(path, w=1280, h=640):
         draw_chip(img, x, 268, t, f)
         x += w_ + 16
 
-    d.text((cx, 328), "Apache-2.0 模型 · MIT 代码 · 不分发权重",
+    d.text((cx, 328), "混元社区许可模型 · MIT 代码 · 不分发权重",
            font=font(18), fill=(100, 116, 139), anchor="mm")
 
     draw_mock_card(img, (340, 352, 940, 606), s=0.92)

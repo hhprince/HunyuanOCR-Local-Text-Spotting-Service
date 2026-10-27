@@ -269,8 +269,10 @@ worker 之间零通信，挂了不影响其它卡。
   也没有随仓库发布任何真实业务图片或识别结果。
 - 公开基准是**合成**样例，能验证方法与相对关系，但**绝对准确度取决于你自己的
   数据**——务必自己测。
-- 模型权重来自 [tencent/HunyuanOCR](https://huggingface.co/tencent/HunyuanOCR)（腾讯，Apache-2.0），
-  本仓库只包含推理封装、参数调优方法论和部署脚本，**不分发任何权重**。
+- 模型权重来自 [tencent/HunyuanOCR](https://huggingface.co/tencent/HunyuanOCR)，
+  遵循 **Tencent Hunyuan Community License Agreement**（注意：地域上不适用于
+  欧盟 / 英国 / 韩国），本仓库只包含推理封装、参数调优方法论和部署脚本，
+  **不分发任何权重**。
 - 昇腾多卡的生产部署只验证过逻辑（worker 池、负载均衡、HTTP 层），
   **NPU 侧的算子兼容性没有实测**，见 [docs/部署说明.md](docs/部署说明.md) 的风险清单。
 
@@ -302,4 +304,6 @@ OCR API, Ascend NPU, CANN, torch_npu, VLM, transformers, PyTorch.
 ## License
 
 本仓库代码 MIT，见 [LICENSE](LICENSE)。
-模型权重遵循腾讯 HunyuanOCR 原仓库的许可。
+模型权重遵循腾讯 HunyuanOCR 原仓库的
+**Tencent Hunyuan Community License Agreement**（地域上不适用于欧盟 / 英国 / 韩国），
+本仓库不重新分发任何权重。
