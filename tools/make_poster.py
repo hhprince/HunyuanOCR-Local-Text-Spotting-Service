@@ -223,10 +223,10 @@ def render_poster(path, w=1600, h=600):
            font=font(26, bold=True), fill=AMBER, anchor="lm")
 
     x = 90
-    for label in ("8GB 显存可跑", "昇腾 8 卡扩容", "逐字符 A/B 验收"):
-        x = draw_chip(img, x, 378, label, font(20)) + 18
+    for label in ("8GB 显存可跑", "昇腾 8 卡扩容", "逐字符 A/B 验收", "图片不出网"):
+        x = draw_chip(img, x, 378, label, font(20)) + 16
 
-    d.text((90, 472), "模型权重遵循腾讯 HunyuanOCR 原仓库许可（Apache-2.0） · 本仓库代码 MIT · 不分发任何权重",
+    d.text((90, 472), "一次性的算力成本，替代按量的云 OCR 账单 · 模型 Apache-2.0 / 代码 MIT",
            font=font(19), fill=(122, 138, 160), anchor="lm")
 
     draw_mock_card(img, (940, 85, 1520, 515), s=1.0)
