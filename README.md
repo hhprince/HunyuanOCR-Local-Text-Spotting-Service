@@ -1,68 +1,136 @@
+<div align="center">
+  <img src="docs/poster.png" alt="HunyuanOCR 本地文字识别服务" width="100%">
+</div>
+
+<div align="center">
+
 # HunyuanOCR 本地文字识别服务
 
-用 **HunyuanOCR-1.5** 在本地/自有算力上做中文文字识别（text spotting），对外提供
-与主流云 OCR 接口同构的 HTTP 服务，**替掉按量付费的云 OCR 调用**。
+**用 HunyuanOCR-1.5 在自有算力上做中文文字识别，把按量计费的云 OCR 换成自己的一张显卡。**
 
-- 开发机：单张消费级 NVIDIA 显卡（8GB 就够）
-- 生产机：昇腾多卡集群，N 进程数据并行
-- 接口：`POST /ocr/general` → `{"words_result": [{"words": "..."}], "words_result_num": N}`
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![Model](https://img.shields.io/badge/model-tencent%2FHunyuanOCR-FF6D00.svg)](https://huggingface.co/tencent/HunyuanOCR)
+[![Backend](https://img.shields.io/badge/backend-CUDA%20%7C%20Ascend%20NPU-7C3AED.svg)](docs/%E9%83%A8%E7%BD%B2%E8%AF%B4%E6%98%8E.md)
+[![Stars](https://img.shields.io/github/stars/hhprince/HunyuanOCR-Local-Text-Spotting-Service?style=social)](https://github.com/hhprince/HunyuanOCR-Local-Text-Spotting-Service)
 
-> 模型权重来自 [tencent/HunyuanOCR](https://huggingface.co/tencent/HunyuanOCR)（腾讯，Apache-2.0），
-> 本仓库只包含推理封装、参数调优方法论和部署脚本，不分发任何权重。
+[快速开始](#五步把字看清) · [踩坑清单](#三个必须知道的坑) · [实测数据](docs/实验记录.md) · [部署说明](docs/部署说明.md)
 
-## 为什么做这个
+</div>
 
-云 OCR 按调用量计费，业务量上来后是一笔持续支出，而且**图片要出网**——
-对含个人信息的单据/卡片类图片，这是合规问题。HunyuanOCR-1.5 只有 1.12B 参数，
-单卡就能跑，把算力放在自有机器上，成本变成一次性的。
+---
 
-但"能跑"和"跑得准"是两件事。这个仓库主要解决后者：**怎么把一个开源模型
-调到你自己的业务数据上，并且能证明它比默认值准**。
+## 这仓库解决什么
 
-## 快速开始
+| 痛点 | 这里的答案 |
+|---|---|
+| 云 OCR 按量计费，业务量上来是一笔持续支出 | 1.12B 权重，**8GB 显卡**起步，成本变成一次性的 |
+| 图片要出网——含个人信息的单据/卡片是**合规问题** | 全程本地推理，**图片不出网** |
+| 换环境、换参数之后，说不清准确度有没有变差 | 逐字符 A/B 工具 + **全部实测数据公开** |
+| 开发机和生产机跑的是两套逻辑，调好的参数一换机就废 | 开发和生产**共用 `ocr_core.py`**，提示词差一个字都不行 |
+
+## 为什么值得看：聚合指标会骗人
+
+> 三档权重精度（bf16 / fp16 / fp32）的**行命中率完全相同**（都是 44/60），
+> 字符准确率只差 **0.07 个百分点**。
+>
+> **光看这两个指标，官方默认的 bf16 和 fp16 毫无区别。**
+>
+> 但逐字符比，只有 **2/6** 的图片结果完全相同——4 张图的差别是
+> "考察/考虑"、"权重/权限"这种**单字替换**。
+
+聚合指标分辨不出"错了一个字"。**本仓库最想说明的就是这件事**，
+所以它自带一套逐字符比对工具和一份可以复现的公开基准。
+
+## 五步把字看清
+
+| | 步骤 | 干什么 | 一条命令 |
+|---|---|---|---|
+| ① | **拉权重** | 装依赖，把 1.12B 权重拉到本地缓存 | `pip install -r requirements.txt` |
+| ② | **造字纸** | 程序画出合成样例图，同时导出标准答案 | `python tools/make_sample.py --style noisy --count 6 --out data/samples_noisy` |
+| ③ | **试读** | 开发机单卡跑通，产出一份结果 JSON | `python batch_ocr_dev.py --input-dir data/samples_noisy` |
+| ④ | **开服务** | 起 HTTP 服务，昇腾多卡数据并行 | `python serve_ocr_prod.py --host 0.0.0.0 --port 8000` |
+| ⑤ | **校对** | 逐字符 A/B + 打分，证明改动没让准确度变差 | `python tools/compare_runs.py a.json b.json --diff` |
+
+<details>
+<summary><b>展开每一步的细节</b></summary>
+
+### ① 拉权重
 
 ```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
 
-# 造几张合成样例图（程序生成，不含任何真实数据）
+权重会自动从 HuggingFace 下载并缓存（约 4GB）。国内建议先设镜像：
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+```
+
+> **最低要求**：transformers ≥ 5.13.0（`HunYuanVL` 架构只在 5.x 提供）、显存 ≥ 8GB。
+
+### ② 造字纸
+
+仓库里**不含任何真实图片**，样例是 `tools/make_sample.py` 程序画出来的，
+同时导出 `ground_truth.json`（合成图的标注是已知的，直接导出）：
+
+```bash
+python tools/make_sample.py --style clean --count 3 --out data/samples_clean
+python tools/make_sample.py --style hard  --count 6 --out data/samples_hard
 python tools/make_sample.py --style noisy --count 6 --out data/samples_noisy
+```
 
-# 开发机跑一遍
+三档风格分别对应：干净 / 小字+噪点 / 小字+噪点+低对比+强压缩（最难）。
+
+### ③ 试读
+
+```bash
 python batch_ocr_dev.py --input-dir data/samples_noisy
 ```
 
-起服务：
+输出 `output/ocr_<时间戳>.json`，头部带全部实际生效的参数（模型、提示词、
+放大倍数、精度、采样、attn），**换环境时一眼就能看出配置有没有跑偏**。
+
+### ④ 开服务
 
 ```bash
+# 开发机调试（用 CUDA 模拟多卡）
+python serve_ocr_prod.py --devices cuda:0,cuda:0 --port 8001
+
+# 生产（昇腾 8 卡）
 python serve_ocr_prod.py --host 0.0.0.0 --port 8000
+```
+
+```bash
 curl -F 'image=@data/samples_noisy/noisy_001.jpg' http://127.0.0.1:8000/ocr/general
 ```
 
-## 核心结论：聚合指标会骗人
+接口与主流云 OCR 同构：`POST /ocr/general` → `{"words_result": [{"words": "..."}], "words_result_num": N}`。
 
-这是本仓库最想说明的一件事。仓库自带的公开基准（合成样例，`noisy` 风格，
-6 张图 / 60 行标准答案）上，三档权重精度的结果是这样：
+### ⑤ 校对
 
-| dtype | 行命中率 | 字符准确率 | **与 fp16 逐字符相同** |
-|---|---|---|---|
-| `bfloat16`（官方默认） | 44/60 (73.3%) | 96.56% | **2/6** |
-| `float16` | 44/60 (73.3%) | 96.49% | 基准 |
-| `float32` | 44/60 (73.3%) | 96.49% | **6/6** |
+**光比"命中项数"会骗人，必须逐字符比。**
 
-三档的**行命中率完全相同**，字符准确率只差 0.07 个百分点。
-**光看这两个指标，bf16 和 fp16 毫无区别。**
+```bash
+# 跑两遍，参数不同
+python batch_ocr_dev.py --input-dir 你的图 --output-dir output/a --dtype float16
+python batch_ocr_dev.py --input-dir 你的图 --output-dir output/b --dtype bfloat16
 
-但逐字符比，bf16 和 fp16/fp32 只有 2/6 的图片完全相同——4 张图的识别结果确实
-不同，差别是"考察/考虑"、"权重/权限"这种**单字替换**。
+# 逐字符比：几张图完全相同 + 每张图第一处不同的位置
+python tools/compare_runs.py output/a/*.json output/b/*.json --diff
 
-所以：
+# 有标注就直接打分：行命中率 + 字符准确率
+python tools/score.py output/a/*.json --truth 你的标注.json
+```
 
-- **fp16 与 fp32 等价**（6/6 逐字符相同），选 fp16；
-- **bf16 的尾数只有 7 位**（fp16 是 10 位），在接近判定边界的图上会做不同的取舍；
-- **做准确度 A/B 必须逐字符比**——这就是 `tools/compare_runs.py` 存在的理由。
+完整的验收流程和判定阈值见 [docs/准确度验收.md](docs/准确度验收.md)。
 
-## 放大倍数：有硬上限，但没有通用最优值
+</details>
 
+## 三个必须知道的坑
+
+**1. 放大倍数有硬上限，但没有通用最优值。**
 processor 的 `max_pixels = 2048² = 4.19MP`，超了会被内部缩回去：
 
 | scale | 进模型的像素 | 行命中率 | 说明 |
@@ -78,21 +146,19 @@ processor 的 `max_pixels = 2048² = 4.19MP`，超了会被内部缩回去：
 真实翻拍照片的原始细节比模型的 token 网格更细，放大能把细节带进去。
 **所以必须用 `tools/score.py` 在自己的数据上测，不要照抄别人的默认值。**
 
-## 另外三个坑
+**2. 提示词用官方的，采样反而要偏离官方。**
+官方把 12 种任务的提示词锁死不让改，确实有道理——换回官方提示词后回归集上
+多找出多个真实文本块，自造提示词整块漏掉。
+但官方 client 默认带 `repetition_penalty=1.08`，那是给长文档防贪心重复退化用的；
+本场景下同一印刷短语重复出现是正常内容，加惩罚实测会**掉真块、造出假字段名**。
+这里刻意用纯贪心，准确率优先。
 
-**1. 提示词用官方的。** 官方把 12 种任务的提示词锁死不让改，确实有道理：
-换回官方提示词后回归集上多找出多个真实文本块，自造提示词整块漏掉。
-
-**2. 采样反而要偏离官方。** 官方 client 默认带 `repetition_penalty=1.08`，
-那是给长文档防贪心重复退化用的。本场景下同一印刷短语重复出现是正常内容，
-加惩罚实测会掉真块、造出重复拼接的假字段名。这里刻意用纯贪心。
-
-**3. 输出解析不能"一个坏元素毁掉整张图"。** 实测模型会吐出
-`{"box755, 880, 818, 903], "text": "..."}` 这种少冒号少方括号的坏格式，
+**3. 输出解析不能"一个坏元素毁掉整张图"。**
+实测模型会吐出 `{"box755, 880, 818, 903], "text": "..."}` 这种少冒号少方括号的坏格式，
 整个数组于是不是合法 JSON。原来的实现直接判"解析失败"，**整张图的块全丢**
 （6 张样例里 4 张中招，clean 集准确率从 100% 掉到 33%）。
 现在改成整段解析失败就退化成"逐个抠 `text` 字段"，坏的那个自动跳过。
-见 `tools/test_parser.py` 的回归测试。
+见 `tools/test_parser.py` 的回归测试（10 条断言，秒级跑完，不用 GPU）。
 
 ## 架构
 
@@ -117,6 +183,7 @@ worker 之间零通信，挂了不影响其它卡。
 ├── test_service.py         服务自测（进程内 TestClient，不占端口）
 ├── tools/
 │   ├── make_sample.py      生成合成样例图（仓库里不含任何真实图片）
+│   ├── make_poster.py      生成 README 海报 / GitHub 社交预览图
 │   ├── compare_runs.py     两次运行逐字符比对——准确度 A/B 工具
 │   ├── score.py            用 ground truth 打准确率分
 │   └── test_parser.py      输出解析器的单元测试（秒级，不用 GPU）
@@ -128,7 +195,8 @@ worker 之间零通信，挂了不影响其它卡。
 └── docs/
     ├── 部署说明.md          昇腾/CANN 安装、参数表、验收清单、风险
     ├── 实验记录.md          全部实测数据
-    └── 准确度验收.md        怎么证明改动没让准确度变差
+    ├── 准确度验收.md        怎么证明改动没让准确度变差
+    └── poster.png          README 海报（由 tools/make_poster.py 生成）
 ```
 
 **开发环境和生产环境共用 `ocr_core.py`**，只有入口文件不同。
@@ -150,6 +218,8 @@ worker 之间零通信，挂了不影响其它卡。
   也没有随仓库发布任何真实业务图片或识别结果。
 - 公开基准是**合成**样例，能验证方法与相对关系，但**绝对准确度取决于你自己的
   数据**——务必自己测。
+- 模型权重来自 [tencent/HunyuanOCR](https://huggingface.co/tencent/HunyuanOCR)（腾讯，Apache-2.0），
+  本仓库只包含推理封装、参数调优方法论和部署脚本，**不分发任何权重**。
 - 昇腾多卡的生产部署只验证过逻辑（worker 池、负载均衡、HTTP 层），
   **NPU 侧的算子兼容性没有实测**，见 [docs/部署说明.md](docs/部署说明.md) 的风险清单。
 
