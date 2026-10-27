@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 推理产物（结果 JSON、批量输出）
+output/
+
+# IDE
+.idea/
+.vscode/
+
+# 真实业务数据：放在 data/ 下的任何目录里，都不要提交。
+# 下面这条默认忽略 data/ 下的一切，只把公开的合成样例和黄金基准放回来——
+# 这样以后新增业务目录名也不会漏进仓库。
+# 放行的这几个目录是 tools/make_sample.py 程序生成的合成图，可以公开。
+data/*
+!data/samples/
+!data/samples_clean/
+!data/samples_hard/
+!data/samples_noisy/
+!data/expected/
+
+# 模型权重
+*.pt
+*.safetensors
+*.bin

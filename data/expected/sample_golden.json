@@ -1,0 +1,204 @@
+{
+  "_comment": "合成样例图的黄金基准。样例由 tools/make_sample.py 程序生成（不含任何真实数据），本文件是它们在本项目默认配置下的识别结果。改动默认配置会让这个基准失效——那正是它该起的作用。",
+  "_config": {
+    "model": "tencent/HunyuanOCR",
+    "dtype": "float16",
+    "scale": 1.5,
+    "attn_implementation": "sdpa",
+    "sampling": "greedy"
+  },
+  "results": [
+    {
+      "image": "clean_001.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0001 批次 BATCH-0001"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路1号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    },
+    {
+      "image": "clean_002.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0002 批次 BATCH-0002"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路2号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    },
+    {
+      "image": "clean_003.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0003 批次 BATCH-0003"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路3号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    },
+    {
+      "image": "clean_004.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0004 批次 BATCH-0004"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路4号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    },
+    {
+      "image": "clean_005.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0005 批次 BATCH-0005"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路5号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    },
+    {
+      "image": "clean_006.jpg",
+      "words_result": [
+        {
+          "words": "合成样例卡片 SYNTHETIC SAMPLE"
+        },
+        {
+          "words": "本图由 tools/make_sample.py 程序生成，不含任何真实数据。"
+        },
+        {
+          "words": "编号 NO. 0006 批次 BATCH-0006"
+        },
+        {
+          "words": "收件人栏：示例收件人 电话：000-0000-0000"
+        },
+        {
+          "words": "地址栏：某市某区示例路6号 邮编：000000"
+        },
+        {
+          "words": "这是一段用于测试小字识别的说明文字，长度接近真实卡片上的印刷内容。"
+        },
+        {
+          "words": "CHINA POST SAMPLE 80"
+        },
+        {
+          "words": "0123456789"
+        },
+        {
+          "words": "000000"
+        }
+      ]
+    }
+  ]
+}
