@@ -22,6 +22,10 @@
 
 ---
 
+> **本项目的一部分实测数据已发布到官方仓库的讨论中**：
+> [Tencent-Hunyuan/HunyuanOCR#114](https://github.com/Tencent-Hunyuan/HunyuanOCR/issues/114#issuecomment-6432419874)
+> —— 关于 processor 像素上限、放大倍数的代价，以及 bf16 / fp16 逐字符差异的 CUDA 侧实测。
+
 ## 实际效果
 
 <div align="center">
